@@ -1,0 +1,17 @@
+Received: from 127.0.0.1 (unverified [127.0.0.2]) by 127.0.0.3
+1         2    3          4^^^^^^^^^  5^^^^^^^^ 
+			   ` This   or ` this will be scanned and will match
+                             if -l was used. All 3 will be scanned if -h used.
+Received: from 127.0.0.1 (unverified [127.0.0.2]) by 127.0.0.3
+` This will be scanned only if -l wasn't used (-h or none).
+
+If -l or -h - the rest of file won't be scanned.
+127.0.0.1
+127.0.0.2
+127.0.0.3
+
+Summary:
+
+-l should find only 1 IP address
+-h should find only 6 IP addresses
+no -l no -h should find 9 IP addresses

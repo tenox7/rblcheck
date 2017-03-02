@@ -1,0 +1,541 @@
+
+  -================================================================-
+ 
+     RBLCHECK - MAILsweeper Realtime Black List Checker
+                Version 2.0 FINAL For MAILsweeper 4.3
+                Written by Antoni Sawicki
+                Dublin, Jun 08 2003
+
+  -================================================================-
+
+
+Table of content:
+~~~~~~~~~~~~~~~~~
+
+- Legal information
+- Changes    <<<===  VERY IMPORTANT FOR USERS OF PREVIOUS VERSIONS!
+- Requirements       ``````````````````````````````````````````````
+- General Usage
+- Installation instructions (for MAILsweeper)
+- Testing
+- Troubleshooting
+- Performance
+- Credits
+
+Legal information:
+~~~~~~~~~~~~~~~~~~~
+
+ - The following Copyright applies:
+
+   Copyright (c) 2003 by Antoni Sawicki <tenox@tenox.tc>
+
+ - License:
+
+   This software is distributed under the terms  and  conditions  of
+   GPL  - GNU  General  Public  License. The software is provided AS
+   IS and ABSOLUTELY NO WARRANTY IS  GIVEN.  The  author  takes   no
+   responsibility for any damages or consequences caused by usage of
+   this software.  Please read the attached file: GPL.TXT  for  more
+   information.   For  information   regarding   modifications   and
+   redistribution please refer to GPL.TXT as well. Non-GNU licensing
+   is available on request.
+
+   WARNING: PLEASE READ THE LICENSING  AGREEMENT  BEFORE  USING  THE
+   SOFTWARE.  USING IT AUTOMATICALLY ASSUMES THAT YOU HAVE AGREED TO
+   THE TERMS AND CONDITIONS OF THE LICENSE AGREEMENT.  
+
+
+Changes:
+~~~~~~~~
+
+   Please note there has been a major changes introduced to user-side
+   of RBLCHECK in this release. If you are using any previous release
+   you *MUST* update MAILsweeper configuration.
+   
+   Important changes: 
+
+     1. Error exit code (NOT_CHECKED) has been changed from 3 to 2.
+ 
+     2. Mandatory parameter <logfile> has been added. 
+
+     3. All errors are now redirected to <logfile>. 
+
+     4. RBLCHECK no longer will send messages to Undetermined
+        on any DNS errors on timeouts. If DNS doesn't work, the
+        message will be passed clean. However you may still get
+	Undetermined from Executable Scenario Timeout. To avoid
+	this, please follow further instructions.
+
+   The new features and other changes:
+
+     1. Check only IP address of the connecting host instead of scanning
+        whole message. To use this enable option "-l".
+
+     2. Scan only message header instead of whole message or the IP of
+        the connecting host. To use this enable option "-h".
+
+     3. Enable to use Windows DNS Resolver Cache to speed up DNS name
+        resolution. Option: "-c".
+
+     4. Statistics, results and particular matches can now be viewed
+        in Message Viewer / Analysis if you capture %LOGTEXT%.
+     
+     5. Few minor changes to improve performance.
+
+
+Requirements:
+~~~~~~~~~~~~~
+
+   = MAILsweeper [MIMEsweeper] version 4.3 or higher.
+
+     Jens.Eichler@bruderhilfe.de reported in last minute that
+     RBLCHECK will work with MAILsweeper 4.2 (SP2). In my opinion
+     it will however not work with -l option and you have to enable
+     inserting IP addresses to headers manualy in config file (see
+     configuration guide bellow).
+
+   = Windows 2000 or higher [Tested on 2000/2003/XP].
+
+     Alan_Kemball@evc-int.com reported in last minute that copying
+     DNSAPI.DLL from Windows 2000 to NT 4.0 will allow RBLCHECK to
+     run on Windows NT 4.0. However I woudn't use -c (caching) since
+     Windows NT 4.0 does not have Resolver Cache.
+
+
+General Usage:
+~~~~~~~~~~~~~
+
+   In short, RBLCHECK takes a configuration file with list of RBL (DNSBL)
+   domain names (rblservers), then it reads supplied message file and
+   extracts all addresses found inside and for each IP address found,
+   RBLCHECK checks it on each DNSBL server specified on the list. This
+   version of RBLCHECK can also scan only message header or only the IP
+   address of the connecting host.
+
+   If number of matches from RBL servers is equal to, or more than
+   the number supplied on command line, the message is classified
+   as "positive" or "DETECTED". If number of matches is smaller than
+   the minimum required, then it's classified as "negative" or "NONE".
+
+   If no (0) IP addresses were found in message CLEAN (NONE) is returned.
+
+   If no (0) valid DNS responses were returned, CLEAN (NONE) is returned.
+
+   Following is a table of error codes and actions taken by MAILsweeper:
+
+   Code  MSW Name     Reason      MSW Action
+   -----------------------------------------------
+     0   NONE         NEGATIVE    Clean
+     1   DETECTED     POSITIVE    Classification
+     2   NOT_CHECKED  ERROR       Undetermined
+   
+
+   In version 2.0 a great care has been taken to not return NOT_CHECKED
+   on some "soft" errors such as no IP addresses found or no DNS servers
+   working. RBLCHECK will however return NOT_CHECKED at early initialization
+   stage, at command line syntax error, etc.
+
+
+   The command line parameters are:
+
+     rblcheck.exe [-d] [-l] [-h] [-c] <#_matches> <rblservers> <message> <log>
+
+   Where:
+
+     -d = debug switch (optional) - will display debugging information.
+          IMPORTANT: do not use it while operating under MAILsweeper!
+
+     -l = last, check only last IP address in the path, or in other words
+          the IP address of the host connecting to MAILsweeper. If you don't
+	  specify this option, RBLCHECK will scan the whole mail message
+	  by default and will check *ALL* IP addresses found inside. This
+	  option is recommended. However in some cases (smarthost, messages
+          coming trough another mail exchanger/s or just to be more
+          restrictive) you will want not to use this option.
+
+     NOTE: -l won't work with MSW 4.2
+
+     -h = header, scan only message header. This is somewhere in the middle
+          between scanning whole message and only single IP addresses. Only
+	  the SMTP message header will be scanned. This option is my personal
+	  favorite over -l. Nevertheless it has some drawbacks.
+
+     NOTE: if you won't use either -l or -h, whole message will be scanned.
+
+     -c = cache, enable to use Windows DNS Resolver Cache to speed up
+          DNS resolution. This option is recommended.
+
+     NOTE: -l won't work with Windows NT 4.0
+
+     <#_matches> - number of required positive matches to classify the
+          message as POSITIVE (DETECTED) and return code 1. If number
+	  '1' is given, single match on any rblserver will cause the
+	  message to be stopped. This is the recommended setting for
+	  the -l option. If you are scanning whole message (no -l) or
+	  the message header (-h) - I'd suggest start with 2-3 and 
+	  decrease it in time to 1, along with list of servers used. 
+	  
+     NOTE: I really suggest to use '1' in above settings..
+
+     <rblservers> - full path to the textfile name containing list
+          of rblservers (sample file rblservers.txt included).
+
+     <message> - this should be the %FILENAME% token used by MAILsweeper.
+
+     <log> - this should be the %LOGNAME% token used by MAILsweeper.
+
+
+Installation instructions (for MAILsweeper):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   1. Copy "rblcheck.exe" and "rblservers.txt" to any place you choose
+      on your local system. 
+
+   2. Copy "regex.dll" to %winnt%\system32 or any place specified in
+      %PATH% environment variable.
+
+   * TIP: You can create directory like c:\rblcheck and extract all exe,
+     dll and txt files there. In this case you will have to add it to the
+     system %PATH% environment variable.
+
+   3. Edit the example file rblservers.txt and remove or add any servers
+      you want.  Remember - more servers, longer time it takes to check
+      each mail and bigger chance of classifying innocent mail as spam.
+      However more servers equals to better spam detection. With 10 DNSBL
+      servers I'm getting about 80% spam blocked.
+    
+      As of my current knowledge there is no single comprehensive list of
+      DNSBL servers available for use in RBLCHECK. Bellow is a list of all
+      servers known to me:
+
+        spews.relays.osirusoft.com 
+        relays.osirusoft.com
+        dnsbl.njabl.org
+        bl.spamcop.net
+        list.dsbl.org 
+        multihop.dsbl.org
+        unconfirmed.dsbl.org
+        relays.ordb.org
+        dynablock.wirehub.net
+        blackholes.wirehub.net
+        proxies.blackholes.wirehub.net
+        sbl.spamhaus.org
+        orbs.dorkslayers.com
+        blackholes.five-ten-sg.com
+        dev.null.dk
+
+      Some of them however almost never returns any valid responses and
+      some other are very slow, etc., so test them very carefully.
+      For more information I recommend visiting http://www.spews.org/.
+
+   *  IMPORTANT: Keep in mind that when not using option -l (no option
+      at all or using -h) you shouldn't use servers that lists dialup
+      or dynamic IP addresses.
+
+
+   4. Manually test the installation by typing (in cmd.exe):
+
+<path_to>\rblcheck.exe -d 100 <path_to>\rblservers.txt <path_to>\test.txt con
+
+    * IMPORTANT: when specifying filenames *ALWAYS* use full path names,
+      enclosed in " " if they contain white spaces.
+ 
+      Use test.txt included in the zip file. Watch for any errors and see
+      if all or your rblservers has been used. The IP address 127.0.0.2
+      should be detected (marked as "POSITIVE") on each server. (This
+      IP address is set on most servers as the always-match test address.)
+
+      With <#_match> equal 100 you should get "NONE" with exit code 0 at the
+      end. If you'll lower the value to 3 you should get "DETECTED" and exit
+      code = 1. (With standard rblservers.txt and test.txt...). If option
+      -l is used, RBLCHECK should find only 1 (single) IP address. If -h
+      was used - 6 IP addresses should be scanned. In default configuration
+      (no -h no -l) total 9 IP addresses should be found and scanned.
+ 
+      The "con" parameter for <logfile> will send the output to the console.
+      You can use "nul" or some file name and view it later. Debug [-d] option
+      however will always print to the console.
+ 
+      If everything is fine here. You can continue the installation.
+
+
+   5. Open MAILsweeper console. Go to Scenarios->Incoming and create new
+      new "Executable" scenario.
+
+   6. For data types choose only "Container->SMTP Message"
+
+   7. In the application location field enter or browse to the full path
+      of rblcheck.exe. Remember to use full paths and enclose in double
+      quotes if it contains white spaces.
+
+   8. At the command line specify:
+
+      <#_matches>  <full_path_to_rblservers.txt>  %FILENAME%  %LOGNAME%
+
+      You can (should!) specify the -c, -l or -h options here. (Recommended!)
+
+      The most standard combination is:
+
+        -l -c 1 c:\rblcheck\rblservers.txt %FILENAME% %LOGNAME%
+
+     or:
+
+        -h -c 1 c:\rblcheck\rblservers.txt %FILENAME% %LOGNAME%
+
+     or:
+
+        3 c:\rblcheck\rblservers.txt %FILENAME% %LOGNAME%
+
+   * IMPORTANT: Do not use -d option within MAILsweeper!
+
+   9. Use Win32 as application type.
+
+  10. In Advanced Properties edit the Timeout property. This
+      is essential if you want to avoid "Undetermined" messages.
+      The formula is:
+
+        DNSQueryTimeout  *  No.Rblservers  =  Timeout
+
+      DNSQueryTimeout is described later in Troubleshooting
+      and Performance sections. By default it's about 20 seconds.
+
+      Default list of Rblservers.txt contains 6 servers so the
+      minimum timeout should be:
+
+      20  *  6  =  120 seconds 
+
+      Remember to extend the timeout or reduce DNSQueryTimeout if
+      you want to use more rblservers. 
+
+  11. DO NOT set working directory unless you have a specific 
+      reason to do that and you do know exactly how it works...
+
+   *  TIP (for advanced users): you might consider using ramdisk
+      as the working directory if you have high loads of email to
+      scan (more then 1-2 per second) and you don't have SCSI RAID
+      controller with write-cache enabled.
+
+  12. In Return Codes, set:
+
+      0 for NONE
+      1 for DETECTED
+      2 for NOT_CHECKED
+
+  13. In each return code description field (for all codes) enter: %LOGTEXT%
+      Put this for all 3  NONE/DETECTED/NOT_CHECKED cases so in case message
+      was blocked by something else, or undetermined - you will see why and
+      if that was caused by RBLCHECK or not.
+
+  14. Use classification of your choice. I recommend to create new
+      classification called for example "BLACK-LISTED" and held messages
+      in a quarantine + notify the sender that his message was held,
+      why and what he should do about it...
+
+  15. IMPORTANT: Enable following option in MAILsweeper:
+
+       SMTP Relay -> Properties -> Receiver Service
+
+       Insert IP address into Received Header for:
+       = ALL CONNECTING HOSTS
+
+      You can enable it directly in the configuration file:
+
+      Version 4.3:
+
+         [MailServer]
+         v:IPInReceivedHeader=$Btrue
+         v:IPInAllReceivedHeaders=$Btrue
+
+      Version 4.2
+
+         [SMTP General]
+         v:IPInReceivedHeader=$I1
+         v:IPinAllreceivedHeader=$I1
+
+     
+  16. Restart MAILsweeper services. Watch the system...
+
+  17. I recommend to spend some time on fine tuning of the list of
+      rblservers and number of positive matches... You can see by
+      which rblserver the message was classified as positive, in
+      the message viewer / analysis.
+
+      You also should monitor Undetermined messages for possible
+      problems with DNS timeouts.
+
+
+Testing:
+~~~~~~~~
+
+   If you want to test if MAILsweeper and RBLCHECK are working fine
+   together (however you can safely skip this point) you have
+   two options depending on whenever you choose -l/-h or not.
+   If not, you can simply send a message with string "127.0.0.2"
+   in it and see if it's blocked.
+
+   If you use -l or -h the life becomes more complex:
+
+ * TIP: you can switch off -l/h for time of this test to avoid
+   the hassle with telnet and use the first method.
+
+   Login locally to the machine running MSW and open telnet.exe
+   (no parameters!)
+
+   In telnet type:
+
+   > set localecho
+
+   (or local_echo depending on the telnet version)
+
+   Later:
+
+   > open 127.0.0.2 25
+
+   You should get connected to your MAILsweeper receiver.
+   Type carefully (server output omitted):
+
+   helo there
+   mail from: test@test.com
+   rcpt to: postmaster@YOURDOMAINHERE.com
+   data
+   From: test@test.com
+   To: postmaster@YOURDOMAINHERE.com
+   Subject: Spam test.
+
+   This is a test message.
+   .
+   quit
+   
+   Don't miss the empty line after Subject line and put dot (.)
+   as a single character in the last line to finish up.
+
+   This message should be classified as a spam and send to
+   adequate quarantine. You should check it in the message
+   viewer / analysis.
+
+   If in troubles or you want to trace the whole process,
+   you can use -d switch and run RBLCHECK from a command
+   line with a text file message to scan.
+
+ * TIP: if you want quickly to test some IP address you can
+   run RBLCHECK from the command line and specify "con" as the
+   message and logfile names. You can the simply paste or type
+   in the address you want to check and RBLCHECK will scan it.
+   In this case DO NOT use -l option! Example:
+
+   C:\rblcheck>rblcheck.exe 1 rblservers.txt con con
+   127.0.0.2
+   POSITIVE; [stats...]
+   
+   You probably will want to add -d to the above example.
+
+
+Troubleshooting:
+~~~~~~~~~~~~~~~~
+
+   Let me guess, it works fine from the command line but when added
+   to MAILsweeper, all messages goes to "Undetermined" folder?
+
+   1. Check if REGEX.DLL is located in a folder specified in the
+      system %PATH% environment variable or in %WINNT%\system32.
+
+   2. Go to application configuration details. Check if the command
+      line contains exactly:
+
+      [-options...] <digit> <path_to\rbservers.txt> %FILENAME% %LOGNAME%
+
+   3. If you placed rblcheck.exe or rblservers.txt in a folder contains
+      white spaces (such as "Program Files") you must enclose it with
+      double quotes, for example:
+
+      "c:\Program Files\rblcheck\rblcheck.exe"
+      "c:\Program Files\rblcheck\rblservers.txt"
+
+   4. Do not enclose whole command line in the quotes. Each element separately.
+
+   5. If only some messages are classified as Undetermined check the
+      Executable Timeout (see installation notes) in application details.
+
+   If all this doesn't help, drop me a mail...
+
+
+Performance:
+~~~~~~~~~~~~
+
+   Performance and support for large volume transactions is the second
+   point after stability of the application. RBLCHECK was designed to
+   support large amount of messages at maximum speed with some drawbacks
+   enforced by MAILsweeper design.
+
+   RBLCHECK was tested and it's used regularly on large systems with
+   loads over 250.000 messages per day. If you are using it on much
+   bigger systems, please contact me to share some experience.
+
+   Also if you have any specific performance considerations just email
+   me and we'll discuss the case. Bellow are few tips how to achieve
+   best performance out of RBLCHECK and MAILsweeper:
+
+   1. Always scan only SMTP Container (noted in installation guide).
+
+   2. For maximum performance use only -l or -h options. In case of -l,
+      RBLCHECK will stop after first valid IP address is found or
+      after first line, if not found. In case of -h, RBLCHECK will scan
+      only lines starting with word "Received" and up to end of the
+      SMTP header.
+
+   3. Use minimal (but best) rblservers.txt list. For best performance
+      detection/ratio I recommend about 5 rblservers. DNS resolution is
+      slowest part of all the operations.
+
+   4. Enable use of DNS Resolver cache (option -c). You may consider to
+      enlarge the cache and extend TTLs by tweaking registry options.
+
+   5. Use data folder (you can set the working directory) only on volumes
+      with Write Cache enabled. If you do not have RAID controller with
+      large Write Cache I recommend use of RAMDISK driver. This is only
+      for really high loads. If you have less than one message per second
+      don't worry about this.
+
+   6. Increase v:MaxJobs in MAILsweeper configuration in order to run more 
+      processes simultaneously.
+
+   7. Decrease DNS Query Timeout. However by decreasing this, you will decrease
+      effectiveness or even completely disable RBLCHECK. This option is closely
+      related to Scenario Execution Timeout (see previous section and
+      installation instructions).
+
+      IMPORTANT: I won't alert you about editing registry itself, but this
+      particular value is of a special type and requires special care. Read
+      following Resource Kit article:
+
+http://www.microsoft.com/windows2000/techinfo/reskit/en-us/regentry/96406.asp
+
+
+Support:
+~~~~~~~~
+
+   This application is a free, unsupported software, however you are
+   most welcome to email me and ask for any help. MAILsweeper support
+   forum is also a good place to start with, however I don't follow
+   it regularly.
+
+   RBLCHECK is robust and stable thanks to all people that test,
+   report bugs, give me useful feedback and ask for new features.
+   Many thanks!
+   
+   Any comments, bug reports and feature request are very appreciated!
+
+   Commercial support, feature requests, customization and non-GNU
+   licensing is also available.
+
+   Please write to: rblcheck@tenox.tc
+
+
+Credits:
+~~~~~~~~
+
+   Development   - Antoni Sawicki, NTinternals.net
+   Devl. Testing - Quincy Jackson, Continental Airlines
+   Original Idea - Thomas Bojstrup Johansen, [restricted]
+
+EOF

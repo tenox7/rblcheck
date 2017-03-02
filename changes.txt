@@ -1,0 +1,57 @@
+User-visible changes made from release 1.4 to 2.0.
+For more details please read the readme.txt file.
+---------------------------------------------------------------------------
+
+IMPORTANT CHANGES - Affects MAILsweeper configuration:
+
+	- Added mandatory parameter of <logfile> - this should
+	  be the %LOGNAME% token from MAILsweeper. 
+
+	- All erors redirected to %LOGNAME% as well.
+
+	- Changed NOT_CHECKED Exit Code from '3' to '2'.
+
+	- Changed the way NONE/DETECTED/NOT_CHECKED is evaluated
+	  at end of the work.
+
+	- RBLCHECK no longer will send messagess to Undetermined
+	  on any DNS errors on timeout. If DNS doesn't work, the
+	  message will be passed clean.
+
+
+NEW FEATURES:
+
+	- Option to check only the IP address of the connecting
+	  host instead of scanning whole message. 
+
+	- Option to scan only the SMTP message header.
+
+	- Logging and statistics output for the message analysys.
+	  All except initialization errors are now reported to the
+	  analysys as well.
+
+	- Option to enable use of the DNS Resolver Cache for better
+	  performance.
+
+	- Will return NOT_CHECKED if there is no single valid response
+	  from any dns server specified.
+
+	- Cleaned and improved the code for better perfomance.
+
+	- Added some more servers to the rblservers.txt file.
+
+
+User-visible changes made from release 1.2 to 1.4.
+For more details please read the readme.txt file.
+---------------------------------------------------------------------------
+
+	- Use GNU Regex "Match" instead of POSIX Regex "Search" for
+	  searching IP addresses in the email file. 
+
+	- Better text parsing of rblservers.txt.
+
+	- More readable debug output with -d option.
+
+	- Will display some DNS/winsock erros in the debug session.
+ 
+	- Added SPEWS (www.spews.org) to default list of rblservers.

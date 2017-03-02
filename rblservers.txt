@@ -1,0 +1,6 @@
+relays.osirusoft.com
+dnsbl.njabl.org
+bl.spamcop.net
+list.dsbl.org 
+relays.ordb.org
+sbl.spamhaus.org
